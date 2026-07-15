@@ -1,0 +1,6 @@
+# DNSGlobe Workflow Dependencies
+#
+# flask_restx and dnspython are already provided by the Gateway runtime, listed
+# here for documentation only.
+flask_restx==1.3.0
+dnspython>=2.6.0

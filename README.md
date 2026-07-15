@@ -4,6 +4,8 @@ A [BlueCat Gateway](https://docs.bluecatnetworks.com/r/Gateway-Administration-Gu
 
 Query every resolver in your list concurrently, group their answers (round-robin-safe — resolvers serving different subsets of one healthy pool are treated as agreeing, not diverging), and see at a glance whether a record has fully propagated.
 
+![DNSGlobe screenshot](docs/screenshot.webp)
+
 ## Features
 
 - **34 built-in public resolvers** across Google, Cloudflare, Quad9, OpenDNS, and regional providers spanning North America, Europe, Russia/Middle East, East Asia, and the southern hemisphere.

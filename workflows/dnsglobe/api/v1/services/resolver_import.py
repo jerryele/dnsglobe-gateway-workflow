@@ -1,4 +1,3 @@
-# Copyright 2026 BlueCat Networks (USA) Inc. and its affiliates. All Rights Reserved.
 """
 Bulk-import parser for user-supplied resolver lists (.txt or .csv). One lenient
 parser handles both: fields split on comma if the line has one, else on

@@ -1,4 +1,3 @@
-# Copyright 2026 BlueCat Networks (USA) Inc. and its affiliates. All Rights Reserved.
 """
 DNSGlobe API v1.
 """

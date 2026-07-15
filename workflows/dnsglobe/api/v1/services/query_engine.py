@@ -1,4 +1,3 @@
-# Copyright 2026 BlueCat Networks (USA) Inc. and its affiliates. All Rights Reserved.
 """
 Concurrent DNS propagation queries, ported from the dnsglobe TUI project's
 src/dns.rs (https://github.com/514-labs/dnsglobe).

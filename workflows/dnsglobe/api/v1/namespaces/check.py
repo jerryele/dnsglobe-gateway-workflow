@@ -1,4 +1,3 @@
-# Copyright 2026 BlueCat Networks (USA) Inc. and its affiliates. All Rights Reserved.
 """
 REST endpoints for DNSGlobe: the resolver list the map is drawn from, and the
 propagation check itself.

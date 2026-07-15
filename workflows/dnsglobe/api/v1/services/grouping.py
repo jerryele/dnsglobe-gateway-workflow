@@ -1,4 +1,3 @@
-# Copyright 2026 BlueCat Networks (USA) Inc. and its affiliates. All Rights Reserved.
 """
 Answer grouping and majority/propagation summary, ported from the dnsglobe TUI
 project's `App::summary` (https://github.com/514-labs/dnsglobe, src/app.rs).

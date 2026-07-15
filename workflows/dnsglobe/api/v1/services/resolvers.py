@@ -1,4 +1,3 @@
-# Copyright 2026 BlueCat Networks (USA) Inc. and its affiliates. All Rights Reserved.
 """
 Built-in public DNS resolver list, ported from the dnsglobe TUI project's
 src/resolvers.rs (https://github.com/514-labs/dnsglobe).

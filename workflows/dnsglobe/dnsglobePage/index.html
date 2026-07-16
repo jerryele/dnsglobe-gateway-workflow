@@ -250,13 +250,13 @@
   #resultsTableWrap, #nsListWrap { flex: 1 1 auto; min-height: 0; overflow-y: auto; border: 1px solid #e0e0e0; border-radius: 2px; }
   .status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
   .answer-values { font-family: "SFMono-Regular", Consolas, monospace; font-size: 11.5px; }
-  .answer-values .dig-line { white-space: nowrap; }
-  .answer-values .dig-line + .dig-line { margin-top: 2px; }
-  .answer-values .dig-name { color: #161616; }
-  .answer-values .dig-ttl { color: #8d8d8d; margin-left: 8px; }
-  .answer-values .dig-class { color: #8d8d8d; margin-left: 8px; }
-  .answer-values .dig-type { color: #0043ce; font-weight: 600; margin-left: 8px; }
-  .answer-values .dig-data { margin-left: 8px; }
+  .dig-line { white-space: nowrap; font-family: "SFMono-Regular", Consolas, monospace; font-size: 11.5px; }
+  .dig-line + .dig-line { margin-top: 2px; }
+  .dig-name { color: #161616; }
+  .dig-ttl { color: #8d8d8d; margin-left: 8px; }
+  .dig-class { color: #8d8d8d; margin-left: 8px; }
+  .dig-type { color: #0043ce; font-weight: 600; margin-left: 8px; }
+  .dig-data { margin-left: 8px; }
   .muted { color: #8d8d8d; }
   #tableEmpty { padding: 20px; text-align: center; color: #8d8d8d; }
 </style>
@@ -830,36 +830,8 @@ var COASTLINE_FLAT = [
 
       var tdAnswer = document.createElement("td");
       tdAnswer.className = "answer-values";
-      if (row.result.kind === "records" && row.result.records && row.result.records.length) {
-        // dig-style: one line per answer-section record, in the server's
-        // original order (CNAME hops before the record they resolve to).
-        row.result.records.forEach(function (rec) {
-          var line = document.createElement("div");
-          line.className = "dig-line";
-          var name = document.createElement("span");
-          name.className = "dig-name";
-          name.textContent = rec.name;
-          var ttl = document.createElement("span");
-          ttl.className = "dig-ttl";
-          ttl.textContent = rec.ttl;
-          var rdclass = document.createElement("span");
-          rdclass.className = "dig-class";
-          rdclass.textContent = rec.rdclass;
-          var rdtype = document.createElement("span");
-          rdtype.className = "dig-type";
-          rdtype.textContent = rec.rdtype;
-          var data = document.createElement("span");
-          data.className = "dig-data";
-          data.textContent = rec.data;
-          line.appendChild(name);
-          line.appendChild(ttl);
-          line.appendChild(rdclass);
-          line.appendChild(rdtype);
-          line.appendChild(data);
-          tdAnswer.appendChild(line);
-        });
-      } else if (row.result.kind === "records") {
-        tdAnswer.textContent = row.result.values.join(", "); // fallback if a result ever lacks per-record detail
+      if (row.result.kind === "records") {
+        tdAnswer.textContent = row.result.values.join(", ");
       } else if (row.result.kind === "no_records") {
         tdAnswer.innerHTML = '<span class="muted">' + row.result.code + "</span>";
       } else if (row.result.kind === "servfail") {
@@ -905,6 +877,26 @@ var COASTLINE_FLAT = [
   // answer (X/Y resolvers): ..." panel below its map - one line per value so
   // a multi-value answer (round-robin A records, several MX hosts, ...)
   // reads as a list, not a wall of comma-separated text.
+  function appendDigSpan(line, className, text) {
+    var span = document.createElement("span");
+    span.className = className;
+    span.textContent = text;
+    line.appendChild(span);
+  }
+
+  // Finds the first majority-group row that has full per-record detail, so
+  // the box can show dig-style lines (name/ttl/class/type/data) instead of
+  // just the bare value list - every row in the group shares this answer by
+  // definition, so any one of them is a faithful representative.
+  function findMajorityRepresentative(rows, majorityRows) {
+    for (var i = 0; i < rows.length; i++) {
+      if (majorityRows[i] && rows[i].result.kind === "records" && rows[i].result.records) {
+        return rows[i];
+      }
+    }
+    return null;
+  }
+
   function renderMajorityAnswerBox(data) {
     var box = document.getElementById("majorityAnswerBox");
     var s = data && data.summary;
@@ -916,15 +908,32 @@ var COASTLINE_FLAT = [
     var title = document.createElement("div");
     title.className = "majority-title";
     title.textContent = "Majority answer (" + s.agree + "/" + s.responding + " resolvers):";
-    var values = document.createElement("div");
-    values.className = "majority-values";
-    s.majority_values.forEach(function (v) {
-      var line = document.createElement("div");
-      line.textContent = "· " + v;
-      values.appendChild(line);
-    });
     box.innerHTML = "";
     box.appendChild(title);
+
+    var values = document.createElement("div");
+    values.className = "majority-values";
+    var repRow = findMajorityRepresentative(data.rows || [], s.majority_rows);
+    if (repRow) {
+      repRow.result.records.forEach(function (rec) {
+        var line = document.createElement("div");
+        line.className = "dig-line";
+        appendDigSpan(line, "dig-name", rec.name);
+        appendDigSpan(line, "dig-ttl", rec.ttl);
+        appendDigSpan(line, "dig-class", rec.rdclass);
+        appendDigSpan(line, "dig-type", rec.rdtype);
+        appendDigSpan(line, "dig-data", rec.data);
+        values.appendChild(line);
+      });
+    } else {
+      // Fallback (e.g. an older cached response with no `records` field):
+      // the plain value list.
+      s.majority_values.forEach(function (v) {
+        var line = document.createElement("div");
+        line.textContent = "· " + v;
+        values.appendChild(line);
+      });
+    }
     box.appendChild(values);
     box.style.display = "block";
   }

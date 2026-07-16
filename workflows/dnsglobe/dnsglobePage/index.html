@@ -224,6 +224,13 @@
   }
   .legend { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 10px; font-size: 11px; color: #525252; }
   .legend .swatch { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 5px; vertical-align: middle; }
+  #majorityAnswerBox {
+    display: none; margin-top: 12px; padding: 10px 12px; border: 1px solid #e0e0e0; border-radius: 2px;
+    background: #fafaf9; font-size: 12px;
+  }
+  #majorityAnswerBox .majority-title { color: #525252; margin-bottom: 6px; }
+  #majorityAnswerBox .majority-values { font-family: "SFMono-Regular", Consolas, monospace; font-size: 11.5px; }
+  #majorityAnswerBox .majority-values div { padding: 1px 0; }
 
   table { width: 100%; border-collapse: collapse; font-size: 12px; }
   thead th {
@@ -410,6 +417,7 @@
             <span><span class="swatch" style="background:var(--pending)"></span>No records</span>
             <span><span class="swatch" style="background:var(--idle)"></span>Not checked yet</span>
           </div>
+          <div id="majorityAnswerBox"></div>
         </section>
       </div>
     </main>
@@ -858,6 +866,34 @@ var COASTLINE_FLAT = [
     el.innerHTML = html;
   }
 
+  // The map panel's info box, ported from the original TUI's "Majority
+  // answer (X/Y resolvers): ..." panel below its map - one line per value so
+  // a multi-value answer (round-robin A records, several MX hosts, ...)
+  // reads as a list, not a wall of comma-separated text.
+  function renderMajorityAnswerBox(data) {
+    var box = document.getElementById("majorityAnswerBox");
+    var s = data && data.summary;
+    if (!s || s.agree === 0 || !s.majority_values.length) {
+      box.style.display = "none";
+      box.innerHTML = "";
+      return;
+    }
+    var title = document.createElement("div");
+    title.className = "majority-title";
+    title.textContent = "Majority answer (" + s.agree + "/" + s.responding + " resolvers):";
+    var values = document.createElement("div");
+    values.className = "majority-values";
+    s.majority_values.forEach(function (v) {
+      var line = document.createElement("div");
+      line.textContent = "· " + v;
+      values.appendChild(line);
+    });
+    box.innerHTML = "";
+    box.appendChild(title);
+    box.appendChild(values);
+    box.style.display = "block";
+  }
+
   // ---- Actions --------------------------------------------------------------
 
   function updateResolverSourceLabel(data) {
@@ -1015,6 +1051,7 @@ var COASTLINE_FLAT = [
     renderResults();
     renderResolverList();
     document.getElementById("summaryLine").innerHTML = "";
+    renderMajorityAnswerBox(null);
     updateResolverSourceLabel(data);
     drawMap();
   }
@@ -1141,6 +1178,7 @@ var COASTLINE_FLAT = [
       data.summary.rows_total = data.rows.length;
       renderResults();
       renderSummary(data);
+      renderMajorityAnswerBox(data);
       drawMap();
 
       var autoRefresh = document.getElementById("autoRefresh");

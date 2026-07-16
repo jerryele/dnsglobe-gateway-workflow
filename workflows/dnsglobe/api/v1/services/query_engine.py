@@ -24,6 +24,7 @@ import dns.asyncquery
 import dns.exception
 import dns.message
 import dns.rcode
+import dns.rdataclass
 import dns.rdatatype
 
 from .resolvers import Resolver
@@ -31,10 +32,21 @@ from .resolvers import Resolver
 QUERY_TIMEOUT: Final[float] = 3.0
 
 
+class DigRecord(TypedDict):
+    """One answer-section line, dig's `name  ttl  class  type  data` format."""
+
+    name: str
+    ttl: int
+    rdclass: str
+    rdtype: str
+    data: str
+
+
 class QueryResult(TypedDict, total=False):
     kind: str  # "records" | "no_records" | "servfail" | "error"
     values: list[str]
     min_ttl: int
+    records: list[DigRecord]
     code: str
     message: str
 
@@ -62,20 +74,34 @@ def _collect_answers(response: "dns.message.Message", rtype: int) -> QueryResult
     a CNAME hop on the way to the requested type), values are labeled with
     their own type when it differs from what was asked for, then sorted and
     deduped so resolvers serving different subsets of a round-robin pool are
-    comparable."""
+    comparable. `records` keeps the raw per-line detail (name/ttl/class/type/
+    data, in the server's original answer-section order) for a dig-style
+    display - `values`/`min_ttl` stay the normalized form grouping.py compares
+    resolvers with."""
     values: list[str] = []
+    records: list[DigRecord] = []
     min_ttl = None
     for rrset in response.answer:
         min_ttl = rrset.ttl if min_ttl is None else min(min_ttl, rrset.ttl)
+        rdtype_text = dns.rdatatype.to_text(rrset.rdtype)
+        rdclass_text = dns.rdataclass.to_text(rrset.rdclass)
         for rdata in rrset:
+            data_text = str(rdata)
             if rrset.rdtype == rtype:
-                values.append(str(rdata))
+                values.append(data_text)
             else:
-                values.append(f"{dns.rdatatype.to_text(rrset.rdtype)} {rdata}")
+                values.append(f"{rdtype_text} {data_text}")
+            records.append({
+                "name": rrset.name.to_text(),
+                "ttl": rrset.ttl,
+                "rdclass": rdclass_text,
+                "rdtype": rdtype_text,
+                "data": data_text,
+            })
     values = sorted(set(values))
     if not values:
         return {"kind": "no_records", "code": "empty answer"}
-    return {"kind": "records", "values": values, "min_ttl": min_ttl or 0}
+    return {"kind": "records", "values": values, "min_ttl": min_ttl or 0, "records": records}
 
 
 def _classify(response: "dns.message.Message", rtype: int) -> QueryResult:

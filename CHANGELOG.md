@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.0.1
+
+- Added a "Majority answer" info box below the map, showing dig-style detail (name/ttl/class/type/data, one line per record, in server order) for a representative resolver from the majority group - so a CNAME chain reads the way `dig` would print it, not just as a flat value list.
+
 ## v1.0.0
 
 Initial release.
